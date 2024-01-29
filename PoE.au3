@@ -1,9 +1,31 @@
-;Version 1.0.0
+;Version 1.0.1
 
 #include <WinAPI.au3>
 #include <MsgBoxConstants.au3>
 #include <WindowsConstants.au3>
 #include <Misc.au3>
+
+; ---- Mouse Stuff ----
+;If Not IsDeclared('$WM_MOUSEWHEEL') Then Global Const $WM_MOUSEWHEEL = 0x020A  ; <----------- Commented out from original script
+Global Const $tagMSLLHOOKSTRUCT = _
+$tagPOINT & _
+';uint mouseData;' & _
+'uint flags;' & _
+'uint time;' & _
+'ulong_ptr dwExtraInfo;'
+
+Global $hFunc, $pFunc
+Global $hHook, $hMod
+
+$hFunc = DllCallbackRegister('_MouseProc', 'lresult', 'int;int;int')
+$pFunc = DllCallbackGetPtr($hFunc)
+$hMod = _WinAPI_GetModuleHandle(0)
+$hHook = _WinAPI_SetWindowsHookEx($WH_MOUSE_LL, $pFunc, $hMod) ; $WH_MOUSE_LL - Installs a hook procedure that monitors low-level mouse input events
+
+; ---- Data ----
+$increment = 0.1
+$sData = 0
+$active = false
 
 ;~ Opt("TrayIconHide", 1) ;Prevent the AutoIt System Tray icon from appearing
 
@@ -11,11 +33,6 @@ If _Singleton(@ScriptName, 1) = 0 Then ;Prevent multiple instances
 	MsgBox(0, "Warning", "Already running: " & @ScriptFullPath, 5)
 	Exit
 EndIf
-
-$increment = 0.1
-$sData = 0
-
-$active = false
 
 Func Increment($dir)
 	If Not $active Then
@@ -28,7 +45,7 @@ Func Increment($dir)
 
 	if $active Then
 		If $dir = 1 Then
-			$sData = Round($sData + $increment, 1)
+			$sData = Round($sData + $increment, 1) ; we round the value cos it's buggy.
 		Else
 			$sData = Round($sData - $increment, 1)
 		EndIf
@@ -47,27 +64,9 @@ Func WriteData()
 		$active = False
 		ClipPut($sData)
 		Send("^v") ; simulates pressing the CTRL+c keys
-		ToolTip("")
+		ToolTip("") ; reset tooltip
 	EndIf
 EndFunc
-
-;If Not IsDeclared('$WM_MOUSEWHEEL') Then Global Const $WM_MOUSEWHEEL = 0x020A  ; <----------- Commented out from original script
-Global Const $tagMSLLHOOKSTRUCT = _
-		$tagPOINT & _
-		';uint mouseData;' & _
-		'uint flags;' & _
-		'uint time;' & _
-		'ulong_ptr dwExtraInfo;'
-
-Global $hFunc, $pFunc
-Global $hHook, $hMod
-
-$hFunc = DllCallbackRegister('_MouseProc', 'lresult', 'int;int;int')
-$pFunc = DllCallbackGetPtr($hFunc)
-$hMod = _WinAPI_GetModuleHandle(0)
-
-$hHook = _WinAPI_SetWindowsHookEx($WH_MOUSE_LL, $pFunc, $hMod) ; $WH_MOUSE_LL - Installs a hook procedure that monitors low-level mouse input events
-
 
 Func Toggle()
 	If _IsPressed("10") And _IsPressed("12") And WinActive("Path of Exile") Then ;SHIFT + ALT
@@ -80,9 +79,8 @@ Func Toggle()
 		Local $aPos = MouseGetPos()
 		ToolTip($increment, $aPos[0], $aPos[1] - 50)
 		Sleep(500)
-		ToolTip("")
+		ToolTip("") ; reset tooltip
 	EndIf
-	Sleep(20)
 EndFunc
 
 Func _MouseProc($iCode, $iwParam, $ilParam)
