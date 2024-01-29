@@ -37,7 +37,9 @@ EndIf
 Func Increment($dir)
 	If Not $active Then
 		Send("{HOME}") ; simulates pressing the Home key
+		Sleep(100)
 		Send("+{END}") ; simulates pressing the Shift+End keys
+		Sleep(100)
 		Send("^c") ; simulates pressing the CTRL+c keys (copy)
 		$sData = ClipGet()
 		$active = true
@@ -107,4 +109,5 @@ While 1
 	Toggle()
 	WriteData()
 	ShowToolTip()
+	Sleep(100)
 WEnd
