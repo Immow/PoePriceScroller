@@ -1,3 +1,5 @@
+;Version 1.0.0
+
 #include <WinAPI.au3>
 #include <MsgBoxConstants.au3>
 #include <WindowsConstants.au3>
